@@ -1,8 +1,6 @@
 import socket 
 from . import constants
 import logging 
-
-
 import sys 
 logger =logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -10,10 +8,62 @@ handler = logging.StreamHandler(sys.stdout)
 logger.addHandler(handler)
 
 import pickle
+import uuid
 
+import struct
 
 import queue 
 import threading 
+
+from . import data
+
+class Data:
+    def __init__(self):
+        self.m_header = {}
+        self.m_body = {}
+    
+    @property
+    def header(self):
+        self.m_header 
+    
+    @header.setter
+    def header(self, header):
+        self.m_header = header
+    @property
+    def body(self):
+        return self.m_body
+    @body.setter
+    def body(self, body):
+        self.m_body = body 
+
+
+class ClientObject():
+    def __init__(self, socket : socket.socket, addr ):
+        self.m_socket = socket
+        self.m_addr = addr
+        self.m_uuid = uuid.uuid4()
+        self.m_input_queue = queue.Queue()
+        self.m_output_queue = queue.Queue()
+
+    @property
+    def uid(self):
+        return self.m_uuid
+
+    def recv(self):
+        # recv header 
+        logger.debug("recv header")
+        new_data = data.AData()
+        new_data.deserialize(self.m_socket)
+        self.m_input_queue.put(new_data)
+        #recv body
+
+        
+
+    def get_input(self, data):
+        self.m_input_queue.put(data)
+    
+    def get(self):
+        return self.m_output_queue.get(block=False)
 
 class Server():
 
@@ -29,7 +79,7 @@ class Server():
         
 
         self.m_accepted_client_sockets = []
-        self.m_listen_client_sockets = []
+        self.m_listen_client_sockets = {}
         self.received_queue = queue.Queue()
 
 
@@ -47,10 +97,12 @@ class Server():
 
             logger.debug("wait to accept")
             clientsocket, address = self.m_socket.accept()
+            # clientsocket.setblocking(False)
             logger.debug("accepeted %s %s", clientsocket, address)
             logger.debug("wait on append sock info")
             self.m_lock.acquire()
-            self.m_accepted_client_sockets.append((clientsocket, address))
+            
+            self.m_accepted_client_sockets.append(ClientObject(clientsocket, address))
             self.m_lock.release()
             logger.debug("new sock was appended")
 
@@ -63,11 +115,14 @@ class Server():
 
 
     def _check_new_client(self):
-        self.m_lock.acquire()
-        if(len(self.m_accepted_client_sockets)):
-            self.m_listen_client_sockets += self.m_accepted_client_sockets 
-            self.m_accepted_client_sockets.clear()
-        self.m_lock.release()
+        if self.m_lock.acquire(False) : # None blocking
+            if(len(self.m_accepted_client_sockets)):
+                for client in self.m_accepted_client_sockets:
+                    self.m_listen_client_sockets[client.uid] = client
+                self.m_accepted_client_sockets.clear()
+            self.m_lock.release()
+        else : 
+            pass 
 
 
     def run(self):
@@ -77,10 +132,10 @@ class Server():
 
         while True :
             self._check_new_client()
+            for uuid, client_object in self.m_listen_client_sockets.items():
+                
+                client_object.recv()
 
-            for socks in self.m_listen_client_sockets:
-                client_sock, address = socks
-                pickle.loads(client_sock.recv(1024))
 
 
     def start(self):

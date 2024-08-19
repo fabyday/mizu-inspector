@@ -8,7 +8,7 @@ import queue
 
 default_logger = logging.getLogger()
 
-
+from . import data
 
 
 class Client():
@@ -58,9 +58,14 @@ class Client():
     
     def start(self):
         self.m_socket.connect((self.m_host, self.m_port))
+        i = 0
         while True:
-            item = self.m_write_buffer.get()
-            self.m_socket.send(b"test")
+            # item = self.m_write_buffer.get()
+            new_data = data.AData()
+            new_data.body = {"integer" : i }
+            print("send")
+            new_data.serialize(self.m_socket)
+            i+= 1
 
 if __name__ == "__main__":
 

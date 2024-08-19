@@ -5,10 +5,27 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Module",
+            "name": "Python : Module server",
             "type": "debugpy",
             "request": "launch",
             "module": "src.server"
+        },
+        {
+            "name": "Python Debugger: client",
+            "type": "debugpy",
+            "request": "launch",
+            "console": "externalTerminal",
+            "module": "src.client"
+        },
+     
+        
+    ],
+    "compounds": [
+        {
+            "name": "Compound",
+            "configurations": ["Python : Module server", "Python Debugger: client", "Python Debugger: client" ],
+
+            "stopAll": true
         }
     ]
 }
