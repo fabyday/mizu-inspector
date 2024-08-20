@@ -1,0 +1,22 @@
+[project]
+name = "mizu-inspector"
+version = "1.0.0"
+authors = [
+  { name="fabyday", email="rohjihyun95@gmail.com" },
+]
+description = "IPC helper package"
+readme = "README.MD"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+Homepage = "https://github.com/fabyday/mizu-inspector"
+Issues = "https://github.com/fabyday/mizu-inspector/issues"
