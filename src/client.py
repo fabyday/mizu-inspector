@@ -4,6 +4,7 @@ import logging
 import pickle
 
 import queue
+import threading
 
 
 default_logger = logging.getLogger()
@@ -18,12 +19,17 @@ class Client():
         self.m_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         default_logger.info("bind")
 
-        self.m_run_on_thread = True 
+        self.m_run_on_thread = True    
+
+        self.m_socket.setblocking(False) # Non-blocking socket
 
 
         self.m_read_buffer = queue.Queue()
 
         self.m_write_buffer = queue.Queue()
+
+
+        self.m_thread = threading.Thread(None, self.run, "network_io thread")
 
 
     @property
@@ -40,14 +46,36 @@ class Client():
 
 
     def run(self):
+        while True :
+            # new_data = data.AData()
+
+            self.__recv()
+            self.__send()
+            new_data.body = {"integer" : i }
+            print("send")
+            raw_packet = new_data.serialize()
+            self.m_socket.send(raw_packet)
+            i+= 1
+ 
+
+
+
+    
+    
+
+
+    def __recv(self):
+        if self.m_tmp_recv_data is None :
+            self.m_tmp_recv_data = data.AData()
+        buf +=  self.m_socket.recv(1000)
+        self.deserialize(buf)
+
+
+
+
+    def __send(self):
         pass 
 
-
-
-    
-    
-
-        
 
 
 
@@ -59,13 +87,8 @@ class Client():
     def start(self):
         self.m_socket.connect((self.m_host, self.m_port))
         i = 0
-        while True:
+        self.m_thread.start()
             # item = self.m_write_buffer.get()
-            new_data = data.AData()
-            new_data.body = {"integer" : i }
-            print("send")
-            new_data.serialize(self.m_socket)
-            i+= 1
 
 if __name__ == "__main__":
 

@@ -14,6 +14,8 @@ import struct
 
 import queue 
 import threading 
+import os.path as osp
+from filelock import Timeout, FileLock
 
 from . import data
 
@@ -38,12 +40,14 @@ class Data:
 
 
 class ClientObject():
-    def __init__(self, socket : socket.socket, addr ):
+    def __init__(self, socket : socket.socket, addr):
         self.m_socket = socket
         self.m_addr = addr
         self.m_uuid = uuid.uuid4()
         self.m_input_queue = queue.Queue()
         self.m_output_queue = queue.Queue()
+
+
 
     @property
     def uid(self):
@@ -70,9 +74,11 @@ class Server():
 
 
     
-    def __init__(self, host = constants.default_host, port = constants.default_port):
+    def __init__(self, host = constants.default_host, port = constants.default_port, set_unique = False , uniqueness_file = constants.default_unique_process_lock ):
         self.m_host = host 
         self.m_port = port 
+        self.m_is_unique = set_unique
+        self.m_uniqueness_file = uniqueness_file
         self.m_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.m_socket.bind((self.m_host, self.m_port))
         logger.info("server started...")
@@ -139,10 +145,14 @@ class Server():
 
 
     def start(self):
-        self.m_recv_thread.start()
-        self.m_recv_thread.join()
+        lock = FileLock(osp.join(constants.default_app_path, self.m_uniqueness_file))
+        with lock:
+            self.m_recv_thread.start()
+            self.m_recv_thread.join()
 
 
 if __name__ == "__main__":
+    #Test 
+    
     server = Server()
     server.start()

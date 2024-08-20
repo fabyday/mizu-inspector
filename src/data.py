@@ -7,6 +7,11 @@ import struct
 import pickle
 import socket
 
+
+
+# header layout : 
+#     - data_size :  unsigned long long (8 BYTES)
+#     - message_type : 
 class AData():
     def __init__(self):
         self.__m_body : dict = None 
@@ -19,14 +24,19 @@ class AData():
     def body(self, body : dict):
         self.__m_body = body 
 
-    def deserialize(self, socket : socket.socket):
+    def deserialize(self, socket : socket.socket, unpickle_body=True):
         data = socket.recv(struct.calcsize("!Q")) # this is 8 bytes
         body_size, *_ = struct.unpack("!Q", data)
-        self.body = pickle.loads(socket.recv(body_size))
+
+        body_data = socket.recv(body_size)
+        if unpickle_body : 
+            self.body = pickle.loads(body_data)
+        else :
+            self.body = body_data
         
 
 
-    def serialize(self, socket : socket.socket):
+    def serialize(self):
         """
             return [header, body] : bytes
 
@@ -37,9 +47,16 @@ class AData():
         body = pickle.dumps(self.body)
         body_size = len(body)
         info_packet = struct.pack("!Q", body_size)
-        socket.send(info_packet + body)
+        return info_packet + body
         
 
+
+
+
+class Message(AData):
+    def __init__(self):
+        pass 
+    
 
 
 
